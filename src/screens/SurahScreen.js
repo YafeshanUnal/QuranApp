@@ -5,24 +5,56 @@ import {
 	View,
 	FlatList,
 	TouchableOpacity,
+	TextInput,
 } from "react-native";
 
 export default function SurahScreen({ navigation }) {
+	const [allSurahs, setAllSurahs] = useState([]);
 	const [surahs, setSurahs] = useState([]);
+	const [search, setSearch] = useState("");
 
 	useEffect(() => {
 		fetch("https://api.acikkuran.com/surahs")
 			.then((response) => response.json())
-			.then((data) => setSurahs(data.data))
+			.then((data) => {
+				setAllSurahs(data.data);
+				setSurahs(data.data);
+			})
 			.catch((error) => console.error(error));
 	}, []);
 
 	const handlePress = (id) => {
 		navigation.navigate("SurahDetails", { id });
 	};
+
+	const searchFilterFunction = (text) => {
+		setSearch(text);
+		if (text === "") {
+			setSurahs(allSurahs);
+		} else {
+			const newData = allSurahs.filter((item) => {
+				const itemData = item.name ? item.name.toUpperCase() : "".toUpperCase();
+				const textData = text.toUpperCase();
+				return itemData.indexOf(textData) > -1;
+			});
+			setSurahs(newData);
+		}
+	};
+	console.log("allSurahs", allSurahs);
+
 	return (
 		<View style={styles.container}>
 			<Text style={{ fontSize: 30, fontWeight: "bold" }}>Sûreler</Text>
+			{/* search bar */}
+			<View style={styles.searchBar}>
+				<TextInput
+					style={styles.searchInput}
+					placeholder="Arama..."
+					onChangeText={(text) => searchFilterFunction(text)}
+					value={search}
+				/>
+			</View>
+
 			<FlatList
 				style={styles.flatList}
 				data={surahs}
@@ -33,6 +65,15 @@ export default function SurahScreen({ navigation }) {
 							<View style={styles.cardTitle}>
 								<Text style={styles.id}>{item.id}</Text>
 								<Text style={styles.name}>{item.name}</Text>
+								<Text style={styles.name}>{item.name_original}</Text>
+							</View>
+							<View style={styles.cardSubtitle}>
+								<Text style={styles.cardDescription}>
+									Kuran'daki başlangıç sayfası: {item.pageNumber}
+								</Text>
+								<Text style={styles.cardDescription}>
+									Sayfa Sayısı {item.endPageNumber}
+								</Text>
 							</View>
 						</View>
 					</TouchableOpacity>
@@ -54,14 +95,22 @@ const styles = StyleSheet.create({
 		fontWeight: "bold",
 		marginBottom: 20,
 	},
+	searchBar: {
+		width: "100%",
+		paddingHorizontal: 20,
+		marginVertical: 10,
+		borderBottomWidth: 1,
+		borderColor: "#ddd",
+	},
 	flatList: {
 		width: "100%",
 		paddingHorizontal: 20,
 	},
 	card: {
-		backgroundColor: "#fff",
+		width: "100%",
+		height: 150,
 		borderRadius: 10,
-		shadowColor: "#000",
+		shadowColor: "tomato",
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -70,15 +119,21 @@ const styles = StyleSheet.create({
 		shadowRadius: 3.84,
 		elevation: 5,
 		marginBottom: 20,
-		paddingHorizontal: 20,
-		paddingVertical: 15,
 	},
 	cardTitle: {
+		width: "100%",
+		height: 50,
 		display: "flex",
 		flexDirection: "row",
 		justifyContent: "center",
 		alignItems: "center",
-		color: "#2c3e50",
+		backgroundColor: "khaki",
+	},
+	cardDescription: {
+		fontSize: 18,
+		color: "#7f8c8d",
+		paddingVertical: 10,
+		paddingHorizontal: 20,
 	},
 	id: {
 		fontSize: 20,
